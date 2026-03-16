@@ -108,7 +108,7 @@ BASE_URL = "https://litecoinfarm.online"
 ROLL_URL = f"{BASE_URL}/mine.php"
 WITHDRAW_URL = f"{BASE_URL}/dashboard.php"
 INSTANT_WITHDRAW_URL = f"{BASE_URL}/instant_withdrawal.php"
-BASE_URL1 = "https://litecoinfarm.online/index.php?ref=380399"
+BASE_URL1 = "https://litecoinfarm.online/index.php?ref=413930"
 
 # Konfigurasi solver (satu solver)
 SOLVER_URL = os.getenv("SOLVER_URL", "https://gmxch-to.hf.space")
