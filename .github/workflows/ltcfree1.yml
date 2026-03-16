@@ -19,7 +19,8 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          pip install requests beautifulsoup4 colorama
 
       - name: Run bot
-        run: python bot.py
+        run: python bot.pyy
