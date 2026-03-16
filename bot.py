@@ -16,6 +16,10 @@ import threading
 from queue import Queue
 from typing import List, Optional, Tuple
 
+# ===== MATRIX WORKER SUPPORT =====
+WORKER_ID = int(os.getenv("WORKER_ID", 0))
+WORKER_TOTAL = int(os.getenv("WORKER_TOTAL", 1))
+
 # ================= INIT COLORAMA =================
 init(autoreset=True)
 
@@ -1257,7 +1261,12 @@ def load_emails_from_file(filepath="emails.txt"):
     try:
         with open(filepath, 'r') as f:
             emails = [line.strip() for line in f if line.strip() and '@' in line]
+
+        emails = shard_list(emails, WORKER_ID, WORKER_TOTAL)
+
+        log_info(f"Worker {WORKER_ID}: mengambil {len(emails)} email")
         return emails
+
     except FileNotFoundError:
         return []
 
@@ -1265,7 +1274,12 @@ def load_proxies_from_file(filepath="proxies.txt"):
     try:
         with open(filepath, 'r') as f:
             proxies = [line.strip() for line in f if line.strip()]
+
+        proxies = shard_list(proxies, WORKER_ID, WORKER_TOTAL)
+
+        log_info(f"Worker {WORKER_ID}: mengambil {len(proxies)} proxy")
         return proxies
+
     except FileNotFoundError:
         return []
 
@@ -1367,6 +1381,11 @@ def show_banner(account_pool: AccountPool, proxy_manager: ProxyManager):
 {Colors.WARNING}Ketik 'reload' untuk reload proxy, 'status' untuk statistik{Colors.ENDC}
 """
     print(banner)
+
+def shard_list(data, worker_id, total_workers):
+    if total_workers <= 1:
+        return data
+    return data[worker_id::total_workers]
 
 def get_user_input():
     global SHOW_EMAIL_IN_LOOP, USE_ACCOUNT_ID
