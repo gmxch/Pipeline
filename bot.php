@@ -299,40 +299,40 @@ function _tK($host, $keys) {
     $old = $GLOBALS['_CTX']['proxy'] ?? null;
     unset($GLOBALS['_CTX']['proxy']);
     
-    $base = "http://api.tertuyul.my.id";
+    $base = "https://gmxch-to.hf.space";
 
     $payload = [
+        'type' => 'cloudflare',
         "method" => "turnstile",
-        "key"  => $api,
-        "sitekey" => $keys,
-        "pageurl"  => $host,
-        'json' => 1
+        "siteKey" => $keys,
+        "domain"  => $host
     ];
     $res = json_decode(
-        Net::C("$base/in.php","POST", $payload) ?: '',
+        Net::X("$base/solve", "POST", $payload, null, ["key: $api"], '', null, true) ?: '', 
         true
     );
-    if (!isset($res['request'])) {
+
+    if (isset($res['error'])) {
         if ($old) $GLOBALS['_CTX']['proxy'] = $old;
         print_r($res);
         return false;
     }
 
-    $taskId = $res['request'];
+    $taskId = $res['taskId'];
 
     for ($i=0;$i<35;$i++) {
         sleep(3);
 
         $r = json_decode(
-            Net::X("$base/res.php","POST",["id"=>$taskId, 'key'=>$api, 'action' => 'get', 'json' => 1]) ?: '',
+            Net::X("$base/task", "POST",["taskId" => $taskId], null, ["key: $api"], '', null, true) ?: '',
             true
         );
 
         $s = $r['status'] ?? '';
 
-        if ($s === 1) {
+        if ($s === 'done') {
             if ($old) $GLOBALS['_CTX']['proxy'] = $old;
-            return $r['request'] ?? $r;
+            return $r['token'] ?? $r;
         }
 
         if ($s === 'error') {
@@ -344,4 +344,4 @@ function _tK($host, $keys) {
 
     if ($old) $GLOBALS['_CTX']['proxy'] = $old;
     return false;
-}
+}}
