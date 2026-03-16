@@ -344,4 +344,4 @@ function _tK($host, $keys) {
 
     if ($old) $GLOBALS['_CTX']['proxy'] = $old;
     return false;
-}}
+}
