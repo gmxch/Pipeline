@@ -23,4 +23,4 @@ jobs:
           pip install requests beautifulsoup4 colorama
 
       - name: Run bot
-        run: python bot.pyy
+        run: python bot.py
