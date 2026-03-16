@@ -19,7 +19,7 @@ jobs:
         run: pip install requests bs4 colorama
 
       - name: Run bot
-        run: python bot.py
+        run: python bot0.py
         env:
           WORKER_ID: ${{ matrix.worker }}
           WORKER_TOTAL: 5
