@@ -1,0 +1,25 @@
+name: ltcfarm-bot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [0,1,2,3,4]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        run: pip install requests bs4 colorama
+
+      - name: Run bot
+        run: python bot.py
+        env:
+          WORKER_ID: ${{ matrix.worker }}
+          WORKER_TOTAL: 5
