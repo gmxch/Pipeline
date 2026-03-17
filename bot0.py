@@ -335,63 +335,90 @@ class AccountPool:
     def get_next_account(self):
         with self.lock:
             now = time.time()
-            
+
+            # ======================
+            # FASE 1: BONUS
+            # ======================
             if self.current_phase == "BONUS":
-                # FASE 1: Cari akun yang belum dapat bonus 50x hari ini
                 for i in range(len(self.accounts)):
                     idx = (self.current_index + i) % len(self.accounts)
                     account = self.accounts[idx]
-                    
+
                     if not account.bonus_done_today:
                         self.current_index = (idx + 1) % len(self.accounts)
                         return account, "BONUS"
-                
-                # Semua akun sudah dapat bonus, pindah ke fase withdraw
+
                 log_success("\n" + "="*60)
                 log_success("✅ SEMUA AKUN SELESAI FASE BONUS 50x!")
                 log_success("🔄 MEMASUKI FASE 2 - WITHDRAW SETIAP JAM...")
                 self.current_phase = "WITHDRAW_ONLY"
                 self.current_index = 0
-            
+
+            # ======================
+            # FASE 2: WITHDRAW
+            # ======================
             if self.current_phase == "WITHDRAW_ONLY":
-                # FASE 2: Cari akun yang bisa withdraw (limit per jam belum habis)
+
+                # reset akun yang waktunya sudah lewat
+                for acc in self.accounts:
+                    if acc.hourly_reset > 0 and now >= acc.hourly_reset:
+                        acc.hourly_remaining = acc.hourly_limit
+                        acc.hourly_reset = 0
+                        log_info(f"♻️ Reset limit akun #{acc.account_id}")
+
+                # cari akun yang bisa withdraw
                 start_idx = self.current_index
+
                 for i in range(len(self.accounts)):
                     idx = (start_idx + i) % len(self.accounts)
                     account = self.accounts[idx]
-                    
+
                     if account.hourly_remaining > 0:
                         self.current_index = (idx + 1) % len(self.accounts)
                         self.total_processed += 1
                         return account, "WITHDRAW"
-                
-                # Semua akun habis limit, cari waktu reset tercepat
+
+                # ======================
+                # semua akun habis limit
+                # ======================
                 min_wait = float('inf')
+
                 for account in self.accounts:
                     if account.hourly_reset > now:
                         wait = account.hourly_reset - now
                         if wait < min_wait:
                             min_wait = wait
-                
+
                 if min_wait < float('inf'):
-                    log_info(f"\n⏰ Semua akun habis limit per jam.")
-                    
-                    # Timer mundur sampai reset
+
+                    log_info("\n⏰ Semua akun habis limit per jam.")
+
                     total_seconds = int(min_wait)
+
                     for remaining in range(total_seconds, 0, -1):
+
                         mins = remaining // 60
                         secs = remaining % 60
-                        
-                        ready = sum(1 for acc in self.accounts if acc.hourly_remaining > 0)
+
+                        ready = sum(
+                            1 for acc in self.accounts
+                            if acc.hourly_remaining > 0 or acc.hourly_reset <= time.time()
+                        )
+
                         waiting = len(self.accounts) - ready
-                        
+
                         sys.stdout.write('\r' + ' ' * 100 + '\r')
-                        sys.stdout.write(f"⏳ Reset limit dalam {mins:02d}:{secs:02d} | Siap: {ready} | Menunggu: {waiting}")
+                        sys.stdout.write(
+                            f"⏳ Reset limit dalam {mins:02d}:{secs:02d} | Siap: {ready} | Menunggu: {waiting}"
+                        )
                         sys.stdout.flush()
+
                         time.sleep(1)
-                    
+
                     print()
+
                     return self.get_next_account()
+
                 else:
                     time.sleep(60)
                     return self.get_next_account()
