@@ -123,9 +123,9 @@ MIN_WITHDRAW = 0.00005000
 WITHDRAW_ALL = True
 FIXED_WITHDRAW_AMOUNT = 0.00005000
 
-MAX_RETRIES = 55
-BACKOFF_FACTOR = 1
-REQUEST_TIMEOUT = 160
+MAX_RETRIES = 3
+BACKOFF_FACTOR = 0.5
+REQUEST_TIMEOUT = 25
 
 # ========== PROXY FILE MONITOR ==========
 PROXY_FILE = "proxies.txt"
@@ -543,15 +543,21 @@ class LitecoinFarmBot:
     def _create_session(self):
         session = requests.Session()
         session.headers.update({"User-Agent": USER_AGENT})
+
         retry_strategy = Retry(
-            total=MAX_RETRIES,
-            backoff_factor=BACKOFF_FACTOR,
+            total=2,
+            connect=2,
+            read=2,
+            backoff_factor=0.3,
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["HEAD", "GET", "OPTIONS", "POST"]
         )
+
         adapter = HTTPAdapter(max_retries=retry_strategy)
+
         session.mount("http://", adapter)
         session.mount("https://", adapter)
+
         return session
 
     def http_request(self, method, url, **kwargs):
