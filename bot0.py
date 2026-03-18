@@ -390,6 +390,7 @@ class AccountPool:
                             min_wait = wait
 
                 if min_wait < float('inf'):
+                    min_wait = min(min_wait, 3600)
 
                     log_info("\n⏰ Semua akun habis limit per jam.")
 
@@ -477,6 +478,7 @@ class LitecoinFarmBot:
         self.all_empty = account_data.all_empty
         self.last_all_empty_time = account_data.last_all_empty_time
         self.hourly_cooldown = account_data.hourly_cooldown
+        self.account.hourly_reset = self.hourly_cooldown
         self.bonus_cooldown = account_data.bonus_cooldown
         
         # Variabel untuk menyimpan state
@@ -911,10 +913,13 @@ class LitecoinFarmBot:
                             reset_in = minutes * 60 + seconds
                             self.hourly_cooldown = time.time() + reset_in
                             self.account.hourly_cooldown = self.hourly_cooldown
+                            self.account.hourly_reset = self.hourly_cooldown
+                            self.account.hourly_remaining = 0
                             log_warning(f"Hourly limit reached. Cooldown for {minutes}m {seconds}s", self.email, self.account_id)
                         else:
                             self.hourly_cooldown = time.time() + 3600
                             self.account.hourly_cooldown = self.hourly_cooldown
+                            self.account.hourly_reset = self.hourly_cooldown
                             log_warning("Hourly limit reached. Could not extract reset time, cooldown 1 hour", self.email, self.account_id)
                     elif 'insufficient funds' in error_lower or 'does not have sufficient funds' in error_lower:
                         log_error("The faucet does not have sufficient funds for this transaction.", self.email, self.account_id)
