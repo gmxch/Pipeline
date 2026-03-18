@@ -478,7 +478,8 @@ class LitecoinFarmBot:
         self.all_empty = account_data.all_empty
         self.last_all_empty_time = account_data.last_all_empty_time
         self.hourly_cooldown = account_data.hourly_cooldown
-        self.account.hourly_reset = self.hourly_cooldown
+        if self.hourly_cooldown:
+            self.account.hourly_reset = self.hourly_cooldown
         self.bonus_cooldown = account_data.bonus_cooldown
         
         # Variabel untuk menyimpan state
@@ -1034,6 +1035,10 @@ class LitecoinFarmBot:
     def _login(self):
         try:
             resp = self.http_request("GET", BASE_URL1)
+            if resp is None:
+                log_error("Request login gagal (None)", self.email, self.account_id)
+                return False
+
             if resp.status_code != 200:
                 log_error("Gagal memuat halaman utama", self.email, self.account_id)
                 return False
@@ -1059,6 +1064,10 @@ class LitecoinFarmBot:
                 return False
             
             resp = self.http_request("GET", ROLL_URL)
+            if resp is None:
+                log_error("Request roll gagal (None)", self.email, self.account_id)
+                return False
+
             if resp.status_code != 200:
                 log_error("Gagal memuat halaman mining", self.email, self.account_id)
                 return False
@@ -1071,7 +1080,7 @@ class LitecoinFarmBot:
                 self.roll_sitekey = roll_sitekey
             
             dash_resp = self.http_request("GET", WITHDRAW_URL)
-            if dash_resp.status_code == 200:
+            if dash_resp and dash_resp.status_code == 200:
                 self.extract_hourly_limit_info(dash_resp.text)
                 self.balance = self.extract_balance(dash_resp.text)
             
